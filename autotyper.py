@@ -5,7 +5,20 @@ import threading
 import time
 import random
 import pyperclip
-import win32clipboard
+import platform
+
+# Windows-only: rich HTML clipboard support
+if platform.system() == "Windows":
+    try:
+        import win32clipboard
+        CF_HTML = win32clipboard.RegisterClipboardFormat("HTML Format")
+    except Exception:
+        win32clipboard = None
+        CF_HTML = None
+else:
+    win32clipboard = None
+    CF_HTML = None
+
 from bs4 import BeautifulSoup, NavigableString
 import re
 import webbrowser
@@ -14,12 +27,6 @@ import requests
 keyboard = Controller()
 typingActive = False
 loopTyping = False
-
-# Register HTML format for clipboard
-try:
-    CF_HTML = win32clipboard.RegisterClipboardFormat("HTML Format")
-except:
-    CF_HTML = None
 
 # --- Styles and Colors ---
 # --- 🎨 Premium Design System ---

@@ -5,9 +5,18 @@ import threading
 import time
 import random
 import pyperclip
+import sys
+import os
 import platform
 
-# Windows-only: rich HTML clipboard support
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 if platform.system() == "Windows":
     try:
         import win32clipboard
@@ -422,7 +431,22 @@ def stop_typing():
 # --- GUI Setup ---
 # --- 🖥️ GUI Structure ---
 root = tk.Tk()
-root.title("AutoTyper Pro v2.0")
+root.title("Ghost AutoTyper")
+
+# Set Window Icon
+try:
+    icon_path_png = resource_path("icon.png")
+    icon_path_ico = resource_path("icon.ico")
+    
+    if os.path.exists(icon_path_png):
+        icon_img = tk.PhotoImage(file=icon_path_png)
+        root.iconphoto(True, icon_img)
+    
+    if os.path.exists(icon_path_ico):
+        root.iconbitmap(icon_path_ico)
+except Exception as e:
+    print(f"Icon load error: {e}")
+
 root.geometry("560x780")
 root.configure(bg=COLORS["window_bg"])
 
@@ -430,7 +454,7 @@ root.configure(bg=COLORS["window_bg"])
 header_frame = tk.Frame(root, bg=COLORS["window_bg"])
 header_frame.pack(fill="x", pady=(30, 10))
 
-tk.Label(header_frame, text="AutoTyper Pro", bg=COLORS["window_bg"], fg=COLORS["accent"], font=FONTS["title"]).pack()
+tk.Label(header_frame, text="Ghost AutoTyper", bg=COLORS["window_bg"], fg=COLORS["accent"], font=FONTS["title"]).pack()
 status_pill = tk.Frame(root, bg=COLORS["card_bg"], bd=0, highlightthickness=0)
 status_pill.pack(pady=5)
 
@@ -506,17 +530,38 @@ stop_btn = PremiumButton(footer, text="Stop Typing (ESC)", command=stop_typing,
 stop_btn.pack(pady=10)
 
 # The first element packed with side="bottom" goes to the very bottom
-subhan_link = tk.Label(root, text="💡 Need to bypass AI detectors? Humanize text at subhan.tech", 
-                       bg=COLORS["window_bg"], fg=COLORS["accent"], font=FONTS["caption"], cursor="hand2")
-subhan_link.pack(side="bottom", pady=(0, 20))
+# --- Links ---
+links_frame = tk.Frame(root, bg=COLORS["window_bg"])
+links_frame.pack(side="bottom", pady=(0, 20))
 
-def _on_enter(e): subhan_link.config(fg=COLORS["accent_hover"])
-def _on_leave(e): subhan_link.config(fg=COLORS["accent"])
-subhan_link.bind("<Enter>", _on_enter)
-subhan_link.bind("<Leave>", _on_leave)
+subhan_link = tk.Label(links_frame, text="💡 Need to bypass AI detectors? Humanize text at subhan.tech", 
+                       bg=COLORS["window_bg"], fg=COLORS["accent"], font=FONTS["caption"], cursor="hand2")
+subhan_link.pack()
+
+github_link = tk.Label(links_frame, text="⭐ Visit my GitHub: github.com/Subhan-Haider", 
+                        bg=COLORS["window_bg"], fg=COLORS["accent"], font=FONTS["caption"], cursor="hand2")
+github_link.pack(pady=(5, 0))
+
+def _on_enter(e, widget): widget.config(fg=COLORS["accent_hover"])
+def _on_leave(e, widget): widget.config(fg=COLORS["accent"])
+
+subhan_link.bind("<Enter>", lambda e: _on_enter(e, subhan_link))
+subhan_link.bind("<Leave>", lambda e: _on_leave(e, subhan_link))
 subhan_link.bind("<Button-1>", lambda e: webbrowser.open("https://subhan.tech"))
 
-tk.Label(root, text="Pro Features: Auto-Headings • Tables • Bullet Lists", 
+github_link.bind("<Enter>", lambda e: _on_enter(e, github_link))
+github_link.bind("<Leave>", lambda e: _on_leave(e, github_link))
+github_link.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Subhan-Haider"))
+
+tk.Label(root, text="Ghost Features: Auto-Headings • Tables • Bullet Lists", 
          bg=COLORS["window_bg"], fg=COLORS["fg_secondary"], font=FONTS["caption"]).pack(side="bottom", pady=5)
+
+# --- Global Keyboard Listener (ESC to stop) ---
+def on_press(key):
+    if key == Key.esc:
+        stop_typing()
+
+listener = Listener(on_press=on_press)
+listener.start()
 
 root.mainloop()
